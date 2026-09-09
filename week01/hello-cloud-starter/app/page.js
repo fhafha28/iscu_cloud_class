@@ -96,7 +96,7 @@ export default function Home() {
         <div className="intro">
           <h1 id="page-title">URL Shortener</h1>
           <p>
-            긴 URL을 입력하고, 안전하게 처리할 수 있는 값인지 확인해 보세요.
+            긴 URL을 입력하고, 안전하게 처리할 수 있는 값인지 확인해 보세요!
           </p>
         </div>
 
