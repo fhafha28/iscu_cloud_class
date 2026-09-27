@@ -165,7 +165,7 @@ export async function POST(request) {
      */
     const shortCode = createShortCode(originalUrl);
     const baseUrl = new URL(request.url).origin;
-
+    saveUrl(shortCode,originalUrl)
 
     /*
      * URL 생성 성공
