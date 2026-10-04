@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { saveUrl } from "../../../lib/db";
-import { findUrlByShortCode } from "../../../lib/db";
 
 export const runtime = "nodejs";
 
@@ -33,25 +32,6 @@ function createShortCode(originalUrl, length = 6) {
   }
 
   return code;
-}
-
-export async function GET(request, { params }) {
-  const { shortCode } = await params;
-
-  const originalUrl = await findUrlByShortCode(shortCode);
-
-  // TODO
-  // originalUrl이 존재하지 않는 경우
-  // 404 Not Found 응답을 반환하세요.
-
-
-  return new Response(null, {
-    status: 307,
-    headers: {
-      Location: originalUrl,
-      "Cache-Control": "no-store",
-    },
-  });
 }
 
 /*
