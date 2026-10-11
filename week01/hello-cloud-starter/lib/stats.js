@@ -24,7 +24,6 @@ export async function getSummaryStats() {
   `;
 
   const row = rows[0];
-
   return {
     totalUrls: Number(row.total_urls),
     totalClicks: Number(row.total_clicks),

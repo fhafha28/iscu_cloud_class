@@ -46,7 +46,6 @@ export default function AdminPage() {
       const response = await fetch("/api/stats", {
         cache: "no-store",
       });
-
       const data = await response.json();
 
       if (!response.ok) {

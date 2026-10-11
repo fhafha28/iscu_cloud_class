@@ -12,6 +12,7 @@ export async function GET() {
     const topUrl = await getTopUrl();
     const urls = await getUrlStats();
 
+
     // summary, topUrl, urls를 하나의 JSON 응답으로 반환하세요.
     // README의 목표 JSON 구조를 참고하세요.
     return Response.json(
