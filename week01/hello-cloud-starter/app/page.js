@@ -1,200 +1,150 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 
-function formatDate(value) {
-  if (!value) {
-    return "-";
+const MAX_URL_LENGTH = 2048;
+
+function validateUrl(value) {
+  const trimmedUrl = value.trim();
+
+  // TODO 1: 빈 값 검증
+  if(trimmedUrl.length === 0){
+   return "URL을 입력해주세요.";
+  }
+  // TODO 2: 최대 길이 검증
+    if(trimmedUrl.length > MAX_URL_LENGTH){
+    return `URL은 ${MAX_URL_LENGTH}자 이하로 입력해주세요.`;
   }
 
-  return new Date(value).toLocaleString("ko-KR");
+  // TODO 3: http:// 또는 https:// 시작 여부 검증
+  if(!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")){
+    return "URL은 http:// 또는 https://로 시작해야 합니다.";
+  }
+  // TODO 4: 올바른 URL 형식 검증
+  let parsedUrl;
+  try{
+      parsedUrl= new URL(trimmedUrl);
+  } catch {
+    return "올바른 URL 형식으로 입력해주세요.";
+  }
+
+  return null;
 }
 
-function StatCard({ title, value, detail }) {
-  return (
-    <div
-      style={{
-        border: "1px solid #ddd",
-        borderRadius: 12,
-        padding: 20,
-        background: "white",
-      }}
-    >
-      <div style={{ fontSize: 14, color: "#666", marginBottom: 8 }}>
-        {title}
-      </div>
-      <div style={{ fontSize: 28, fontWeight: 700 }}>{value}</div>
-      {detail ? (
-        <div style={{ fontSize: 13, color: "#777", marginTop: 8 }}>
-          {detail}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-export default function AdminPage() {
-  const [stats, setStats] = useState(null);
+export default function Home() {
+  const [originalUrl, setOriginalUrl] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const loadStats = useCallback(async () => {
-    setLoading(true);
+  function handleChange(event) {
+    setOriginalUrl(event.target.value);
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
     setError("");
+    setResult("");
 
-    try {
-      const response = await fetch("/api/stats", {
-        cache: "no-store",
-      });
+    const validationError = validateUrl(originalUrl);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error?.message ?? "Failed to load stats.");
-      }
-
-      setStats(data);
-    } catch (err) {
-      setError(err.message ?? "Failed to load stats.");
-    } finally {
-      setLoading(false);
+    if (validationError !== null) {
+      setError(validationError);
+      return;
     }
-  }, []);
 
-  useEffect(() => {
-    loadStats();
-  }, [loadStats]);
+    setIsLoading(true);
 
-  if (loading && !stats) {
-    return <main style={{ padding: 32 }}>통계를 불러오는 중입니다...</main>;
+  
+try {
+  const response = await fetch("/api/shorten", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      originalUrl,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    setError(data.error?.message || "요청 처리에 실패했습니다.");
+    return;
   }
 
-  if (error && !stats) {
-    return (
-      <main style={{ padding: 32 }}>
-        <h1>관리자 통계</h1>
-        <p>{error}</p>
-        <button onClick={loadStats}>다시 시도</button>
-      </main>
-    );
+  setResult(data.shortUrl);
+} catch {
+  setError("서버에 연결할 수 없습니다.");
+} finally {
+  setIsLoading(false);
+}
   }
-
-  const { summary, urls } = stats;
-  const topUrl = summary.topUrl;
 
   return (
-    <main
-      style={{
-        maxWidth: 1100,
-        margin: "0 auto",
-        padding: "40px 24px",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 16,
-          alignItems: "center",
-          marginBottom: 24,
-        }}
-      >
-        <div>
-          <h1 style={{ margin: 0 }}>관리자 통계</h1>
-          <p style={{ color: "#666", marginBottom: 0 }}>
-            URL Shortener의 사용량을 확인합니다.
+    <main className="page-shell">
+      <section className="url-card" aria-labelledby="page-title">
+        <div className="week-label">CLOUD COMPUTING</div>
+
+        <div className="intro">
+          <h1 id="page-title">URL Shortener</h1>
+          <p>
+            긴 URL을 입력하고, 안전하게 처리할 수 있는 값인지 확인해 보세요.
           </p>
         </div>
-        <button onClick={loadStats} disabled={loading}>
-          {loading ? "새로고침 중..." : "새로고침"}
-        </button>
-      </div>
 
-      {error ? (
-        <p style={{ color: "crimson" }}>새로고침 실패: {error}</p>
-      ) : null}
+        <form className="url-form" onSubmit={handleSubmit} noValidate>
+          <label htmlFor="original-url">줄이고 싶은 URL</label>
+          <div className="input-row">
+            <input
+              id="original-url"
+              name="originalUrl"
+              type="text"
+              inputMode="url"
+              placeholder="https://example.com/very-long-url"
+              value={originalUrl}
+              onChange={handleChange}
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? "url-error" : undefined}
+              disabled={isLoading}
+            />
+            <button type="submit" disabled={isLoading}>
+              {isLoading ? "Checking..." : "Shorten"}
+            </button>
+          </div>
 
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: 16,
-          marginBottom: 32,
-        }}
-      >
-        <StatCard title="전체 단축 URL 수" value={summary.totalUrls} />
-        <StatCard title="전체 클릭 수" value={summary.totalClicks} />
-        <StatCard title="한 번 이상 클릭된 URL 수" value={summary.clickedUrls} />
-        <StatCard
-          title="가장 많이 클릭된 URL"
-          value={topUrl ? `/${topUrl.shortCode}` : "-"}
-          detail={topUrl ? `${topUrl.clickCount}회 클릭` : "아직 클릭 기록이 없습니다."}
-        />
-      </section>
+          <div className="message-area" aria-live="polite">
+            {error && (
+              <p id="url-error" className="message message-error" role="alert">
+                {error}
+              </p>
+            )}
 
-      <section>
-        <h2>URL별 사용량</h2>
-        <div style={{ overflowX: "auto" }}>
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              background: "white",
-            }}
-          >
-            <thead>
-              <tr>
-                <th style={thStyle}>Short Code</th>
-                <th style={thStyle}>Original URL</th>
-                <th style={thStyle}>클릭 수</th>
-                <th style={thStyle}>생성 시간</th>
-                <th style={thStyle}>최근 클릭 시간</th>
-              </tr>
-            </thead>
-            <tbody>
-              {urls.length === 0 ? (
-                <tr>
-                  <td style={tdStyle} colSpan={5}>
-                    저장된 URL이 없습니다.
-                  </td>
-                </tr>
-              ) : (
-                urls.map((url) => (
-                  <tr key={url.shortCode}>
-                    <td style={tdStyle}>{url.shortCode}</td>
-                    <td style={tdStyle}>
-                      <a
-                        href={url.originalUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {url.originalUrl}
-                      </a>
-                    </td>
-                    <td style={tdStyle}>{url.clickCount}</td>
-                    <td style={tdStyle}>{formatDate(url.createdAt)}</td>
-                    <td style={tdStyle}>{formatDate(url.lastClickedAt)}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+            {isLoading && (
+              <p className="message message-loading" role="status">
+                <span className="spinner" aria-hidden="true" />
+                입력한 URL을 확인하고 있습니다.
+              </p>
+            )}
+
+            {result && (
+              <p className="message message-success" role="status">
+                {result}
+              </p>
+            )}
+          </div>
+        </form>
+
+        <aside className="practice-note">
+          <span aria-hidden="true">✓</span>
+          <p>
+            이번 주에는 <code>validateUrl</code> 함수를 완성해 입력값 검증을
+            구현합니다.
+          </p>
+        </aside>
       </section>
     </main>
   );
 }
-
-const thStyle = {
-  textAlign: "left",
-  padding: "12px 10px",
-  borderBottom: "2px solid #ddd",
-  whiteSpace: "nowrap",
-};
-
-const tdStyle = {
-  padding: "12px 10px",
-  borderBottom: "1px solid #eee",
-  verticalAlign: "top",
-};
