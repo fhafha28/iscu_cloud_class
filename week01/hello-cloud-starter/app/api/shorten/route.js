@@ -217,7 +217,7 @@ export async function POST(request) {
           shortUrl: `${baseUrl}/${existing.shortCode}`,
           originalUrl,
         },
-        { status: 400 }
+        { status: 200 }
       );
     }
     
