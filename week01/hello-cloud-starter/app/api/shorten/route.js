@@ -97,7 +97,7 @@ export async function POST(request) {
             message: "Original URL is required.",
           },
         },
-        { status: 200 }
+        { status: 400 }
       );
     }
 
@@ -120,7 +120,7 @@ export async function POST(request) {
               `URL must be ${MAX_URL_LENGTH} characters or fewer.`,
           },
         },
-        { status: 200 }
+        { status: 400 }
       );
     }
 
@@ -151,7 +151,7 @@ export async function POST(request) {
               "URL must start with http:// or https://.",
           },
         },
-        { status: 200 }
+        { status: 400 }
       );
     }
 
@@ -177,7 +177,7 @@ export async function POST(request) {
               "URL must start with http:// or https://.",
           },
         },
-        { status: 200 }
+        { status: 400 }
       );
     }
 
@@ -217,16 +217,11 @@ export async function POST(request) {
           shortUrl: `${baseUrl}/${existing.shortCode}`,
           originalUrl,
         },
-        { status: 200 }
+        { status: 400 }
       );
     }
     
-    /*
-    * 동일 URL 중복 처리: 이미 단축한 URL을 다시 요청하면 기존 shortCode 반환
-    */
-
-    //Todo: 자기 서비스 URL 단축 방지: 자신의 URL Shortener 주소를 다시 단축하려는 요청 차단
-
+ 
     /*
      * 6. Short URL 생성
      *
@@ -249,7 +244,7 @@ export async function POST(request) {
         shortUrl: `${baseUrl}/${shortCode}`,
         originalUrl,
       },
-      { status: 200 }
+      { status: 201 }
     );
 
   } catch {
